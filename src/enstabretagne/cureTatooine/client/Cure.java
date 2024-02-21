@@ -11,6 +11,8 @@ public class Cure {
 	
 	public Map<String,Integer> ateliers;//zone,point
 	
+	
+	
 	public Cure(List<String> ateliersName) {
 		
 		//initialiser la progrssison des ateliers(points) à zéro

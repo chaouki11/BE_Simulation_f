@@ -10,6 +10,7 @@ import annexeTatooine.Zone;
 import annexeTatooine.ZoneInitData;
 import enstabretagne.base.logger.Logger;
 import enstabretagne.base.logger.ToRecord;
+import enstabretagne.base.math.MoreRandom;
 import enstabretagne.base.time.LogicalDateTime;
 import enstabretagne.base.time.LogicalDuration;
 import enstabretagne.cureTatooine.client.Client;
@@ -28,6 +29,10 @@ public class ScenarioTatooineSimple extends Scenario {
 	
 	public static ArrayList<Zone> zones;
 	
+	List<Integer> nbAtelier;
+	
+	List<Double> proportion;
+	
 	public static Zone getZoneByName(String name) {
 		for(Zone z: zones) {
 			
@@ -42,6 +47,24 @@ public class ScenarioTatooineSimple extends Scenario {
 
 	public ScenarioTatooineSimple(SimuEngine engine, ScenarioInitData init) {
 		super(engine, init);
+		
+		
+		
+		//gestion de proportion
+		this.nbAtelier= new ArrayList();
+		this.proportion= new ArrayList();
+		
+		nbAtelier.add(3);
+		nbAtelier.add(4);
+		nbAtelier.add(5);
+		nbAtelier.add(6);
+		
+		proportion.add(0.2);
+		proportion.add(0.35);
+		proportion.add(0.3);
+		proportion.add(0.15);
+		//
+		
 		
 		//créer les zones
 		Zone zone1=new Zone(new ZoneInitData("Zone des terres chaudes", "terres","planifié", new SimpleDateFormat("07:15"), new SimpleDateFormat("14:00"), 6, LogicalDuration.ofMinutes(20), 20, LogicalDuration.ofDay(61), 10, LogicalDuration.ofDay(3), "organisé", 10));
@@ -58,6 +81,7 @@ public class ScenarioTatooineSimple extends Scenario {
 		zones.add(zone4);
 		zones.add(zone5);
 		zones.add(zone6);
+		//
 		
 	}
 
@@ -69,8 +93,45 @@ public class ScenarioTatooineSimple extends Scenario {
 		//On prépare les changements d'affluence chaque mois
 		for(AffluenceParMois a : scenario.affluenceParMois) {
 			Post(new ChangementTauxCreationMois(a.d,a.tauxMax));
-			for(int i=0;i<(a.tauxMax*nbClientMax);i++)
-				Post(new CreerClient(a.d));
+			for(int i=0;i<(a.tauxMax*nbClientMax);i++) {
+				
+				//faut ajouter logique repartition nombre de cure
+				
+				
+				for(int x=0;x<this.nbAtelier.size(); x++) {
+					
+					
+					
+					double tot=this.proportion.get(x);
+					tot=(int)tot*a.tauxMax*nbClientMax;
+					MoreRandom mr= new MoreRandom();
+					for(int e=0; e<tot;e++) {
+						
+						
+						
+						//generate  this.nbAtelier[x] atelier
+						ArrayList<Zone> zonesAfaire=new ArrayList();
+						
+						ArrayList<Zone> inteAzone=new ArrayList();
+						for(Zone p:this.zones) {
+							inteAzone.add(p);
+							
+						}
+						
+						
+						for(int h=0;h<this.nbAtelier.get(e);h++) {
+							int randomIndex = mr.nextInt(inteAzone.size());
+							zonesAfaire.add(inteAzone.get(randomIndex));
+							inteAzone.remove(randomIndex);
+							
+						}
+				        
+						Post(new CreerClient(a.d,zonesAfaire));	//add zonesAfaire to arg
+					}
+					
+				}
+				
+			}
 		}
 	}
 	
@@ -96,17 +157,34 @@ public class ScenarioTatooineSimple extends Scenario {
 	
 	
 	//normalement ici il faut créer un process assez élaboré avec le parcours de soin
-	protected void creerClientAleatoire() {
+	protected void creerClientAleatoire(ArrayList<Zone> zones) {
 		
 		
 			List<String> ateliers=new ArrayList();
-			ateliers.add("Zone des terres chaudes");
+			
+			for (Zone zone : zones) {
+	            // Add the name of each zone to the ateliers list
+	            ateliers.add(zone.getZoneInitData().getNom());
+	        }
+			
+			
 			
 			ClientInitData iniClient = new ClientInitData("C"+nbClientEnCours++,new Cure(ateliers)) ; 
 			Client c = new Client(getEngine(), iniClient);
 			c.requestInit();
 			
+			System.out.println("TESTESTESTEST");
+			System.out.println(c.getName()+c.getCid().getCure());
+			
+			
 			//On sait que la cure ne dure que 3 semaines donc départ du client dans 3 semaines
+			
+			//afficher client crée
+			
+			//Logger.Data("nom client : "+c.getName()+"cure: "+c.getCid().getCure());
+			//System.out.println("nom client : "+c.getName()+"cure: "+c.getCid().getCure());
+			
+			
 			Post(new DepartClient(Now().add(LogicalDuration.ofDay(21)),c));
 	}
 
@@ -130,15 +208,21 @@ public class ScenarioTatooineSimple extends Scenario {
 
 	//
 	public class CreerClient extends SimEvent {
+		
+		public ArrayList<Zone> zones;
 
-		public CreerClient(LogicalDateTime d) {
+		public CreerClient(LogicalDateTime d,ArrayList<Zone> zones) {
 			super(d);
+			for(Zone g:zones) {
+				this.zones.add(g);
+			}
 		}
 		
 		@Override
 		public void process() {
 			
-			creerClientAleatoire();
+			creerClientAleatoire(this.zones);
+			
 		}
 		
 	}

@@ -1,9 +1,11 @@
 package annexeTatooine;
 
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 
 import enstabretagne.base.time.LogicalDateTime;
 import enstabretagne.base.time.LogicalDuration;
+import enstabretagne.cureTatooine.client.Client;
 
 public class ZoneInitData {
 	
@@ -21,6 +23,7 @@ public class ZoneInitData {
 	int tailleFile;
 	int NombreAtelierFonctionnel;
 	String typeFreq;
+	public ArrayList<Client> fileAttente;
 	
 	
 	public ZoneInitData(String nom,String typeSoin,String typeFreq,SimpleDateFormat ouverture,SimpleDateFormat fermeture,int NombreAtelier,LogicalDuration dureeAtelier,int efficacite,LogicalDuration freqDefaillance,double stdDefaillance,LogicalDuration tempsRemiseMarche,String typeAttente,int tailleFile ) {
@@ -38,6 +41,7 @@ public class ZoneInitData {
 	    this.typeAttente = typeAttente;
 	    this.tailleFile = tailleFile;
 	    this.NombreAtelierFonctionnel=NombreAtelier;
+	    this.fileAttente=new ArrayList<Client>(this.tailleFile);
 	     
 	}
 	
